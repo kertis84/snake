@@ -8,7 +8,7 @@ export const SMALL_FIELD = 10
 export const MEDIUM_FIELD = 15
 export const LARGE_FIELD = 20
 
-export const CELL_LENGTH = 16
+export const CELL_LENGTH = 32
 
 export default class GameSettings {
     fieldSize = SMALL_FIELD

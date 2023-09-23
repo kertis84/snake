@@ -1,5 +1,11 @@
 import type GameSettings from "./GameSettings"
 
+export enum GameState {
+    "ready",
+    "run",
+    "lose",
+}
+
 export enum Direction { 'up', 'down', 'left', 'right' }
 export namespace Direction {
     export function reverse(direction: Direction) {
@@ -37,6 +43,8 @@ export default class Gameplay {
     mongoose: Array<Point> = []
     snakeTail: Array<Direction> = []
     eatenFruits: Array<number> = []
+    gameState = GameState.ready;
+    score = 0;
 
     constructor(settings: GameSettings) {
         this.settings = settings
@@ -45,6 +53,7 @@ export default class Gameplay {
 
     resetGame() {
         this.headPos = { x: 0, y: 0 }
+        this.score = 0
         this.direction = Direction.down
         this.speed = 3
         this.snakeTail = [Direction.up, Direction.up,]
@@ -52,6 +61,7 @@ export default class Gameplay {
         this.mongoose = []
         this.setFruit()
         this.setMongoose()
+        this.gameState = GameState.ready
     }
 
     setFruit() {
@@ -60,7 +70,11 @@ export default class Gameplay {
             const x = Math.floor(Math.random() * this.settings.fieldSize)
             const y = Math.floor(Math.random() * this.settings.fieldSize)
 
-            if (this.checkConditions(x, y) && !(x === this.headPos.x && y === this.headPos.y)) {
+            if (this.checkConditions(x, y) && !(x === this.headPos.x && y === this.headPos.y)
+                && !(x === 0 && y === 0)
+                && !(x === 0 && y === this.settings.fieldSize - 1)
+                && !(x === this.settings.fieldSize - 1 && y === 0)
+                && !(x === this.settings.fieldSize - 1 && y === this.settings.fieldSize - 1)) {
                 this.fruit.type = fruitType;
                 this.fruit.x = x;
                 this.fruit.y = y;
@@ -110,7 +124,7 @@ export default class Gameplay {
     }
 
     step() {
-        const prevHeadPos = {...this.headPos}
+        const prevHeadPos = { ...this.headPos }
         const prevSnakeTail = [...this.snakeTail]
 
         this.snakeStepForward();
@@ -118,20 +132,20 @@ export default class Gameplay {
         if (!this.checkConditions(this.headPos.x, this.headPos.y)) {
             this.headPos = prevHeadPos;
             this.snakeTail = prevSnakeTail;
-            return false;
+            this.eatenFruits = this.eatenFruits.map((val) => val - 1);
+            this.gameState = GameState.lose;
         }
 
         if (this.headPos.x === this.fruit.x && this.headPos.y === this.fruit.y) {
+            this.score++;
             this.eatenFruits.push(-1);
             this.setFruit();
         }
 
         if (this.snakeTail.length / this.mongoose.length > 5) this.setMongoose();
-
-        return true;
     }
-    
-    snakeStepForward(){
+
+    snakeStepForward() {
         [this.headPos.x, this.headPos.y] = Direction.directionStep(this.headPos.x, this.headPos.y, this.direction);
         this.eatenFruits = this.eatenFruits.map((val) => val + 1);
         const growPos = this.eatenFruits.indexOf(this.snakeTail.length)
