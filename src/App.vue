@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import GameSettings, {
   CELL_LENGTH,
-  EXTRA_SMALL_FIELD,
   LARGE_FIELD,
   MEDIUM_FIELD,
   SMALL_FIELD,
@@ -14,19 +13,28 @@ import {
   type Ref,
   ref,
   watch,
+  reactive,
   nextTick,
 } from "vue";
 
-enum GameState { 'ready', 'run', 'lose' }
+enum GameState {
+  "ready",
+  "run",
+  "lose",
+}
 
 // The important part: the name of the variable needs to be equal to the ref's name of the canvas element in the template
 const canvas: Ref<HTMLCanvasElement | undefined> = ref();
 const renderContext: Ref<CanvasRenderingContext2D | undefined> = ref();
-const gameSettings = ref(new GameSettings());
-const game = ref(new Gameplay(gameSettings.value));
+const gameSettings = reactive(new GameSettings());
+const game = new Gameplay(gameSettings);
 let timer: number;
 const scale = ref(1);
 const gameState = ref(GameState.ready);
+
+const fruitImg = new Image();
+const mongooseImg = new Image();
+mongooseImg.src = "/images/mongoose.svg";
 
 onMounted(() => {
   // Get canvas context. If 'getContext' returns 'null', set to 'undefined', so that it conforms to the Ref typing
@@ -35,21 +43,13 @@ onMounted(() => {
   addEventListener("keydown", keyDown);
 });
 
-watch(gameState, () => {
-  if (gameState.value === GameState.run) timer = setInterval(nextStep, 1000 / game.value.speed);
-  else if (timer) clearInterval(timer);
-});
-
 function keyDown(event: KeyboardEvent) {
-  if (
-    gameState.value === GameState.ready &&
-    event.code.startsWith("Arrow")
-  )
+  if (gameState.value === GameState.ready && event.code.startsWith("Arrow"))
     gameState.value = GameState.run;
   else if (gameState.value === GameState.run && event.code === "Space") {
     gameState.value = GameState.ready;
   }
-  game.value.setDirection(event.code);
+  game.setDirection(event.code);
 }
 
 onBeforeUnmount(() => {
@@ -60,151 +60,126 @@ onBeforeUnmount(() => {
 function drawBg(ctx: CanvasRenderingContext2D) {
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
   ctx.fillStyle = "RGBA(100,100,100,0.1)";
-  for (
-    var x = 0;
-    x <= ctx.canvas.width;
-    x += 2 * gameSettings.value.cellLength
-  ) {
-    for (
-      var y = 0;
-      y <= ctx.canvas.height;
-      y += 2 * gameSettings.value.cellLength
-    ) {
-      ctx.fillRect(
-        x,
-        y,
-        gameSettings.value.cellLength,
-        gameSettings.value.cellLength
-      );
+  for (var x = 0; x <= ctx.canvas.width; x += 2 * gameSettings.cellLength) {
+    for (var y = 0; y <= ctx.canvas.height; y += 2 * gameSettings.cellLength) {
+      ctx.fillRect(x, y, gameSettings.cellLength, gameSettings.cellLength);
     }
   }
   for (
-    var x = gameSettings.value.cellLength;
+    var x = gameSettings.cellLength;
     x <= ctx.canvas.width;
-    x += 2 * gameSettings.value.cellLength
+    x += 2 * gameSettings.cellLength
   ) {
     for (
-      var y = gameSettings.value.cellLength;
+      var y = gameSettings.cellLength;
       y <= ctx.canvas.height;
-      y += 2 * gameSettings.value.cellLength
+      y += 2 * gameSettings.cellLength
     ) {
-      ctx.fillRect(
-        x,
-        y,
-        gameSettings.value.cellLength,
-        gameSettings.value.cellLength
-      );
+      ctx.fillRect(x, y, gameSettings.cellLength, gameSettings.cellLength);
     }
   }
 }
 
 function drawSnake(ctx: CanvasRenderingContext2D) {
-  let x = game.value.headPos.x;
-  let y = game.value.headPos.y;
+  let x = game.headPos.x;
+  let y = game.headPos.y;
   ctx.fillStyle =
-    gameState.value === GameState.lose
-      ? "RGB(255,51,51)"
-      : "RGB(100,150,100)";
+    gameState.value === GameState.lose ? "RGB(255,51,51)" : "RGB(100,150,100)";
   ctx.fillRect(
-    x * gameSettings.value.cellLength,
-    y * gameSettings.value.cellLength,
-    gameSettings.value.cellLength,
-    gameSettings.value.cellLength
+    x * gameSettings.cellLength,
+    y * gameSettings.cellLength,
+    gameSettings.cellLength,
+    gameSettings.cellLength
   );
 
-  for (let i = 0; i < game.value.snakeTail.length; i++) {
-    [x, y] = Direction.directionStep(x, y, game.value.snakeTail[i]);
+  for (let i = 0; i < game.snakeTail.length; i++) {
+    [x, y] = Direction.directionStep(x, y, game.snakeTail[i]);
 
-    if (game.value.eatenFruits.indexOf(i) >= 0) {
+    if (game.eatenFruits.indexOf(i) >= 0) {
       ctx.fillStyle = "RGB(0,102,204)";
       ctx.fillRect(
-        x * gameSettings.value.cellLength,
-        y * gameSettings.value.cellLength,
-        gameSettings.value.cellLength,
-        gameSettings.value.cellLength
+        x * gameSettings.cellLength,
+        y * gameSettings.cellLength,
+        gameSettings.cellLength,
+        gameSettings.cellLength
       );
     } else {
       ctx.fillStyle = "RGB(100,100,150)";
       ctx.fillRect(
-        x * gameSettings.value.cellLength,
-        y * gameSettings.value.cellLength,
-        gameSettings.value.cellLength,
-        gameSettings.value.cellLength
+        x * gameSettings.cellLength,
+        y * gameSettings.cellLength,
+        gameSettings.cellLength,
+        gameSettings.cellLength
       );
     }
   }
 }
 
 function drawFruit(ctx: CanvasRenderingContext2D) {
-  const img = new Image();
-  img.src = ["/images/fruit_", game.value.fruit.type, ".svg"].join("");
+  fruitImg.src = ["/images/fruit_", game.fruit.type, ".svg"].join("");
   ctx.drawImage(
-    img,
-    game.value.fruit.x * gameSettings.value.cellLength,
-    game.value.fruit.y * gameSettings.value.cellLength,
-    gameSettings.value.cellLength,
-    gameSettings.value.cellLength
+    fruitImg,
+    game.fruit.x * gameSettings.cellLength,
+    game.fruit.y * gameSettings.cellLength,
+    gameSettings.cellLength,
+    gameSettings.cellLength
   );
 }
 
 function drawMongoose(ctx: CanvasRenderingContext2D) {
-  const img = new Image();
-  img.src = "/images/mongoose.svg";
-  game.value.mongoose.forEach((mongoose) =>
+  game.mongoose.forEach((mongoose) =>
     ctx.drawImage(
-      img,
-      mongoose.x * gameSettings.value.cellLength,
-      mongoose.y * gameSettings.value.cellLength,
-      gameSettings.value.cellLength,
-      gameSettings.value.cellLength
+      mongooseImg,
+      mongoose.x * gameSettings.cellLength,
+      mongoose.y * gameSettings.cellLength,
+      gameSettings.cellLength,
+      gameSettings.cellLength
     )
   );
 }
 
 function nextStep() {
-  if(!game.value.step())
-    gameState.value = GameState.lose;
+  if (!game.step()) gameState.value = GameState.lose;
   renderField();
 }
 
 function renderField() {
-  if (!renderContext.value) {
-    return;
-  }
-  drawBg(renderContext.value);
-  drawSnake(renderContext.value);
-  drawFruit(renderContext.value);
-  drawMongoose(renderContext.value);
+  nextTick(() => {
+    if (!renderContext.value) {
+      return;
+    }
+    drawBg(renderContext.value);
+    drawFruit(renderContext.value);
+    drawSnake(renderContext.value);
+    drawMongoose(renderContext.value);
+  });
 }
 
 function resetGame(e: MouseEvent) {
   const target = e.target as HTMLDivElement;
-  if (target.id === "field_xs")
-    gameSettings.value.fieldSize = EXTRA_SMALL_FIELD;
-  else if (target.id === "field_sm") gameSettings.value.fieldSize = SMALL_FIELD;
-  else if (target.id === "field_md")
-    gameSettings.value.fieldSize = MEDIUM_FIELD;
-  else gameSettings.value.fieldSize = LARGE_FIELD;
-  game.value.resetGame();
-  nextTick(() => {
-    renderField();
-  });
+  if (target.id === "field_sm") gameSettings.fieldSize = SMALL_FIELD;
+  else if (target.id === "field_md") gameSettings.fieldSize = MEDIUM_FIELD;
+  else gameSettings.fieldSize = LARGE_FIELD;
+  game.resetGame();
+  gameState.value = GameState.ready;
+  renderField();
 }
 
 function toggleScale() {
   scale.value = scale.value === 1 ? 2 : 1;
-  gameSettings.value.cellLength = CELL_LENGTH * scale.value;
-  nextTick(() => {
-    renderField();
-  });
+  gameSettings.cellLength = CELL_LENGTH * scale.value;
+  renderField();
 }
+
+watch(gameState, () => {
+  if (gameState.value === GameState.run)
+    timer = setInterval(nextStep, 1000 / game.speed);
+  else if (timer) clearInterval(timer);
+});
 </script>
 
 <template>
   <div class="my-3 mx-auto menu-container">
-    <div class="mx-2 menu-item my-auto" id="field_xs" @click="resetGame">
-      Extra small
-    </div>
     <div class="mx-2 menu-item my-auto" id="field_sm" @click="resetGame">
       Small
     </div>
