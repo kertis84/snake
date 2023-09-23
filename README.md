@@ -4,6 +4,8 @@
 
 ![screenshot](https://github.com/kertis84/snake/blob/main/snake.jpg?raw=true)
 
+Use keyboard arrows or swipe for control
+
 ---
 
 ## Recommended IDE Setup

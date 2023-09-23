@@ -8,6 +8,7 @@ import {
   type Ref,
 computed,
 } from "vue";
+import { useSwipe } from '@vueuse/core'
 import Gameplay, { GameState } from "./Gameplay";
 import GameSettings from "./GameSettings";
 import Drawer from "./Drawer";
@@ -30,6 +31,25 @@ onMounted(() => {
   renderField();
   addEventListener("keydown", keyDown);
 });
+
+const { direction } = useSwipe(
+    canvas, {
+        onSwipe() {
+            if(direction.value === "down"){
+              keyDown({code: 'ArrowDown'} as KeyboardEvent)
+            } 
+            else if (direction.value === "up"){
+              keyDown({code: 'ArrowUp'} as KeyboardEvent)
+            }
+            else if (direction.value === "left"){
+              keyDown({code: 'ArrowLeft'} as KeyboardEvent)
+            }
+            else if (direction.value === "right"){
+              keyDown({code: 'ArrowRight'} as KeyboardEvent)
+            }
+        },
+    }
+)
 
 function keyDown(event: KeyboardEvent) {
   if (

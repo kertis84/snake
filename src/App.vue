@@ -7,7 +7,7 @@ import GameSettings, {
 import Copyright from "./components/Copyright.vue";
 import GameField from "./components/GameField.vue";
 import Gameplay from "./components/Gameplay";
-import { reactive, ref } from "vue";
+import { reactive } from "vue";
 
 const gameSettings = reactive(new GameSettings());
 const game = reactive(new Gameplay(gameSettings));
