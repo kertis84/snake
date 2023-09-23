@@ -2,6 +2,8 @@
 
 **[Ссылка на проект](https://cobra-snake.netlify.app/)**
 
+![screenshot](https://github.com/kertis84/snake/blob/main/snake.jpg?raw=true)
+
 ---
 
 ## Recommended IDE Setup
