@@ -1,5 +1,7 @@
 # Game Snake / Игра Змейка
 
+**[Ссылка на проект](https://cobra-snake.netlify.app/)**
+
 ---
 
 ## Recommended IDE Setup

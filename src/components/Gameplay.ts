@@ -88,7 +88,10 @@ export default class Gameplay {
             const x = Math.floor(Math.random() * this.settings.fieldSize)
             const y = Math.floor(Math.random() * this.settings.fieldSize)
 
-            if (this.checkConditions(x, y) && !(x === this.fruit.x && y === this.fruit.y) && !(x === this.headPos.x && y === this.headPos.y)) {
+            if (this.checkConditions(x, y)
+                && !(x === this.fruit.x && y === this.fruit.y)
+                && !(x === this.headPos.x && y === this.headPos.y)
+                && !(x === Direction.directionStep(this.headPos.x, this.headPos.y, this.direction)[0] && y === Direction.directionStep(this.headPos.x, this.headPos.y, this.direction)[1])) {
                 this.mongoose.push({ x: x, y: y })
                 break;
             }
